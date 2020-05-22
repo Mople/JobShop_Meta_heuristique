@@ -1,6 +1,6 @@
 # Heuristic methods for JobShop scheduling
 
-This repository contains the starter code for the assignment.
+Initial template : https://github.com/insa-4ir-meta-heuristiques/template-jobshop
 
 
 ## Compile
