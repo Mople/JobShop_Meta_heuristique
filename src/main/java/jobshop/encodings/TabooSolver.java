@@ -1,16 +1,23 @@
-package jobshop.solvers;
+package jobshop.encodings;
 
 import jobshop.Instance;
 import jobshop.Result;
 import jobshop.Solver;
-import jobshop.encodings.ResourceOrder;
-import jobshop.encodings.Task;
+import jobshop.solvers.DescentSolver;
+import jobshop.solvers.GreedySolverEST_SPT;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DescentSolver implements Solver {
+public class TabooSolver  implements Solver {
 
+    private int maxIter;
+    private int dureeTaboo;
+
+    public TabooSolver(int maxIter, int dureeTaboo){
+        this.dureeTaboo=dureeTaboo;
+        this.maxIter=maxIter;
+    }
     /** A block represents a subsequence of the critical path such that all tasks in it execute on the same machine.
      * This class identifies a block in a ResourceOrder representation.
      *
@@ -75,17 +82,22 @@ public class DescentSolver implements Solver {
         }
     }
 
-
     @Override
     public Result solve(Instance instance, long deadline) {
+        //Initialisation
         Result sInit = new GreedySolverEST_SPT().solve(instance,deadline);
         ResourceOrder sStar = new ResourceOrder(sInit.schedule);
+        ResourceOrder s = new ResourceOrder(sInit.schedule);
+        List<List<Task>> sTaboo = new ArrayList<>();
+        sTaboo.add(s.toSchedule().criticalPath());
+        int k =0;
+        boolean noNeighbors=false;
+        while (k<maxIter && !noNeighbors){
+            k++;
 
-        boolean improve = true;
-        while (improve){
             //Find neighbors
             List<Swap> currentNeightbors = new ArrayList<>();
-            for (Block currentBlock : blocksOfCriticalPath(sStar)){
+            for (Block currentBlock : blocksOfCriticalPath(s)){
                 currentNeightbors.addAll(neighbors(currentBlock));
             }
 
@@ -93,25 +105,38 @@ public class DescentSolver implements Solver {
             int bestScore = Integer.MAX_VALUE;
             ResourceOrder sPrime = null;
             for (Swap currentSwap : currentNeightbors){
-                ResourceOrder possibleState = sStar.copy();
+                ResourceOrder possibleState = s.copy();
                 currentSwap.applyOn(possibleState);
                 int score = possibleState.toSchedule().makespan();
-                if (score < bestScore){
+                if (score < bestScore && !sTaboo.contains(possibleState.toSchedule().criticalPath())){
                     sPrime = possibleState;
                     bestScore = score;
                 }
             }
 
-            //Compare with current state
+            //Add this neighbour to Taboo
+            if (sPrime!=null) {
+                if (sTaboo.size() == dureeTaboo) {
+                    sTaboo.remove(sTaboo.get(0));
+                }
+                sTaboo.add(sPrime.toSchedule().criticalPath());
+                s = sPrime;
+            }
+            else{
+                noNeighbors=true;
+            }
+
+
+            //Compare with best solution
             if (bestScore < sStar.toSchedule().makespan()){
 
                 sStar = sPrime;
             }
-            else {
-                improve = false;
-            }
         }
+
         return new Result(instance,sStar.toSchedule(),Result.ExitCause.Blocked);
+
+
     }
 
     /** Returns a list of all blocks of the critical path. */
@@ -178,5 +203,4 @@ public class DescentSolver implements Solver {
         }
         return result;
     }
-
 }

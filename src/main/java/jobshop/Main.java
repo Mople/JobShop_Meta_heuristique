@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 
 
+import jobshop.encodings.TabooSolver;
 import jobshop.solvers.*;
 import jobshop.solvers.GreedySolverSPT;
 import jobshop.solvers.GreedySolverLRPT;
@@ -33,6 +34,13 @@ public class Main {
         solvers.put("grEST_SPT", new GreedySolverEST_SPT());
         solvers.put("grEST_LRPT", new GreedySolverEST_LRPT());
         solvers.put("desc", new DescentSolver());
+        solvers.put("taboo10_10", new TabooSolver(10,10));
+        solvers.put("taboo50_10", new TabooSolver(50,10));
+        solvers.put("taboo200_10", new TabooSolver(200,10));
+        solvers.put("taboo20_2", new TabooSolver(20,2));
+        solvers.put("taboo20_5", new TabooSolver(20,5));
+        solvers.put("taboo20_10", new TabooSolver(20,10));
+        solvers.put("taboo1000_50", new TabooSolver(1000,50));
         // add new solvers here
     }
 
